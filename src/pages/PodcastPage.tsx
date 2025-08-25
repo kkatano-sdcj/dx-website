@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
+import { usePodcasts } from '../hooks/usePodcasts';
 import { Mic, Play, Pause, Download, Share2, Clock, Calendar, Users } from 'lucide-react';
 
 const PodcastPage = () => {
   const [playingEpisode, setPlayingEpisode] = useState<number | null>(null);
+  
+  // CMS データを取得
+  const { podcasts, loading: podcastsLoading } = usePodcasts();
 
   const featuredEpisode = {
     id: 1,
@@ -230,76 +234,175 @@ const PodcastPage = () => {
           </div>
           
           <div className="space-y-6">
-            {episodes.map((episode) => (
-              <div key={episode.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
-                <div className="grid md:grid-cols-4 gap-0">
-                  <div className="relative">
-                    <img 
-                      src={episode.image}
-                      alt={episode.title}
-                      className="w-full h-32 md:h-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <button 
-                        onClick={() => togglePlay(episode.id)}
-                        className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
-                      >
-                        {playingEpisode === episode.id ? (
-                          <Pause className="w-5 h-5 text-white" />
-                        ) : (
-                          <Play className="w-5 h-5 text-white ml-0.5" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="absolute top-2 left-2">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(episode.category)}`}>
-                        {episode.category}
-                      </span>
+            {podcastsLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
+                  <div className="grid md:grid-cols-4 gap-0">
+                    <div className="w-full h-32 md:h-full bg-gray-200"></div>
+                    <div className="md:col-span-3 p-6">
+                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                      <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                     </div>
                   </div>
-                  
-                  <div className="md:col-span-3 p-6">
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                      <span className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{episode.publishDate}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{episode.duration}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <Users className="w-4 h-4" />
-                        <span>{episode.plays}</span>
-                      </span>
+                </div>
+              ))
+            ) : podcasts.length > 0 ? (
+              podcasts.map((podcast) => {
+                const imageUrl = podcast.attributes.coverImage?.data?.attributes.url 
+                  ? `http://localhost:1337${podcast.attributes.coverImage.data.attributes.url}`
+                  : 'https://images.pexels.com/photos/7551662/pexels-photo-7551662.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+                
+                const publishedDate = new Date(podcast.attributes.publishedDate || podcast.attributes.createdAt).toLocaleDateString('ja-JP');
+                
+                return (
+                  <div key={podcast.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                    <div className="grid md:grid-cols-4 gap-0">
+                      <div className="relative">
+                        <img 
+                          src={imageUrl}
+                          alt={podcast.attributes.title}
+                          className="w-full h-32 md:h-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <button 
+                            onClick={() => togglePlay(podcast.id)}
+                            className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
+                          >
+                            {playingEpisode === podcast.id ? (
+                              <Pause className="w-5 h-5 text-white" />
+                            ) : (
+                              <Play className="w-5 h-5 text-white ml-0.5" />
+                            )}
+                          </button>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                            {podcast.attributes.category}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="md:col-span-3 p-6">
+                        <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                          <span className="flex items-center space-x-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>{publishedDate}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{podcast.attributes.duration}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Users className="w-4 h-4" />
+                            <span>{podcast.attributes.plays}</span>
+                          </span>
+                        </div>
+                        
+                        <h4 className="text-xl font-semibold text-gray-900 mb-2 hover:text-red-600 transition-colors cursor-pointer">
+                          第{podcast.attributes.episodeNumber}回: {podcast.attributes.title}
+                        </h4>
+                        
+                        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                          {podcast.attributes.description}
+                        </p>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            {podcast.attributes.guests && podcast.attributes.guests.length > 0 && (
+                              <>
+                                <span className="text-sm text-gray-500">ゲスト: </span>
+                                <span className="text-sm text-gray-700">{podcast.attributes.guests.join(', ')}</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                              <Download className="w-4 h-4 text-gray-500" />
+                            </button>
+                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                              <Share2 className="w-4 h-4 text-gray-500" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              episodes.map((episode) => (
+                <div key={episode.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                  <div className="grid md:grid-cols-4 gap-0">
+                    <div className="relative">
+                      <img 
+                        src={episode.image}
+                        alt={episode.title}
+                        className="w-full h-32 md:h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button 
+                          onClick={() => togglePlay(episode.id)}
+                          className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
+                        >
+                          {playingEpisode === episode.id ? (
+                            <Pause className="w-5 h-5 text-white" />
+                          ) : (
+                            <Play className="w-5 h-5 text-white ml-0.5" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="absolute top-2 left-2">
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                          {episode.category}
+                        </span>
+                      </div>
                     </div>
                     
-                    <h4 className="text-xl font-semibold text-gray-900 mb-2 hover:text-red-600 transition-colors cursor-pointer">
-                      {episode.title}
-                    </h4>
-                    
-                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                      {episode.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm text-gray-500">ゲスト: </span>
-                        <span className="text-sm text-gray-700">{episode.guests.join(', ')}</span>
+                    <div className="md:col-span-3 p-6">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                        <span className="flex items-center space-x-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{episode.publishDate}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{episode.duration}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <Users className="w-4 h-4" />
+                          <span>{episode.plays}</span>
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                          <Download className="w-4 h-4 text-gray-500" />
-                        </button>
-                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                          <Share2 className="w-4 h-4 text-gray-500" />
-                        </button>
+                      
+                      <h4 className="text-xl font-semibold text-gray-900 mb-2 hover:text-red-600 transition-colors cursor-pointer">
+                        {episode.title}
+                      </h4>
+                      
+                      <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                        {episode.description}
+                      </p>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm text-gray-500">ゲスト: </span>
+                          <span className="text-sm text-gray-700">{episode.guests.join(', ')}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <Download className="w-4 h-4 text-gray-500" />
+                          </button>
+                          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <Share2 className="w-4 h-4 text-gray-500" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>
