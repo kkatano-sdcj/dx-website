@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
+import { useEvents } from '../hooks/useEvents';
 import { Calendar, MapPin, Users, Clock, ExternalLink, Filter } from 'lucide-react';
 
 const EventsPage = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
+  
+  // CMS データを取得
+  const { events: upcomingEvents, loading: upcomingLoading } = useEvents('upcoming');
+  const { events: pastEvents, loading: pastLoading } = useEvents('past');
 
   const filters = [
     { id: 'all', name: 'すべて' },
@@ -13,7 +18,7 @@ const EventsPage = () => {
     { id: 'seminar', name: 'セミナー' }
   ];
 
-  const upcomingEvents = [
+  const upcomingEventsStatic = [
     {
       id: 1,
       title: "社内ハッカソン2024：AIを活用した業務効率化",
@@ -72,7 +77,7 @@ const EventsPage = () => {
     }
   ];
 
-  const pastEvents = [
+  const pastEventsStatic = [
     {
       id: 5,
       title: "新年キックオフ：2024年技術トレンド予測",
@@ -169,76 +174,171 @@ const EventsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">開催予定のイベント</h2>
-            <span className="text-gray-500">{upcomingEvents.length}件のイベント</span>
+            <span className="text-gray-500">{upcomingEventsStatic.length}件のイベント</span>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {upcomingEvents.map((event) => (
-              <div key={event.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
-                <div className="relative">
-                  <img 
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 ${getTypeColor(event.type)} text-white text-sm font-medium rounded-full`}>
-                      {event.type}
-                    </span>
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(event.status)}`}>
-                      {event.status}
-                    </span>
+            {upcomingLoading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
+                  <div className="w-full h-48 bg-gray-200"></div>
+                  <div className="p-6">
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                    <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   </div>
                 </div>
+              ))
+            ) : upcomingEvents.length > 0 ? (
+              upcomingEvents.map((event) => {
+                const imageUrl = event.attributes.featuredImage?.data?.attributes.url 
+                  ? `http://localhost:1337${event.attributes.featuredImage.data.attributes.url}`
+                  : 'https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop';
                 
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3 hover:text-orange-600 transition-colors cursor-pointer">
-                    {event.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                    {event.description}
-                  </p>
+                const startDate = new Date(event.attributes.startDate).toLocaleDateString('ja-JP');
+                const startTime = new Date(event.attributes.startDate).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                const endTime = event.attributes.endDate ? new Date(event.attributes.endDate).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : null;
+                
+                return (
+                  <div key={event.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <div className="relative">
+                      <img 
+                        src={imageUrl}
+                        alt={event.attributes.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="px-3 py-1 bg-orange-600 text-white text-sm font-medium rounded-full">
+                          {event.attributes.eventType}
+                        </span>
+                      </div>
+                      <div className="absolute top-4 right-4">
+                        <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                          {event.attributes.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3 hover:text-orange-600 transition-colors cursor-pointer">
+                        {event.attributes.title}
+                      </h3>
+                      
+                      <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                        {event.attributes.description}
+                      </p>
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{event.date}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{event.time}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span>{event.location}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Users className="w-4 h-4 mr-2" />
-                      <span>定員: {event.participants}</span>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          <span>{startDate}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="w-4 h-4 mr-2" />
+                          <span>{startTime}{endTime && ` - ${endTime}`}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          <span>{event.attributes.location}</span>
+                        </div>
+                        {event.attributes.maxParticipants && (
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Users className="w-4 h-4 mr-2" />
+                            <span>定員: {event.attributes.maxParticipants}名 (現在: {event.attributes.currentParticipants}名)</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {event.attributes.tags && event.attributes.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {event.attributes.tags.map((tag: string, index: number) => (
+                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <span className="text-sm text-gray-500">主催: {event.attributes.organizer}</span>
+                        <button className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center space-x-1">
+                          <span>参加申込</span>
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {event.tags.map((tag, index) => (
-                      <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                        #{tag}
+                );
+              })
+            ) : (
+              upcomingEventsStatic.map((event) => (
+                <div key={event.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                  <div className="relative">
+                    <img 
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className={`px-3 py-1 ${getTypeColor(event.type)} text-white text-sm font-medium rounded-full`}>
+                        {event.type}
                       </span>
-                    ))}
+                    </div>
+                    <div className="absolute top-4 right-4">
+                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(event.status)}`}>
+                        {event.status}
+                      </span>
+                    </div>
                   </div>
+                  
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3 hover:text-orange-600 transition-colors cursor-pointer">
+                      {event.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                      {event.description}
+                    </p>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span className="text-sm text-gray-500">主催: {event.organizer}</span>
-                    <button className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center space-x-1">
-                      <span>参加申込</span>
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{event.date}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <span>{event.location}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Users className="w-4 h-4 mr-2" />
+                        <span>定員: {event.participants}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {event.tags.map((tag, index) => (
+                        <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <span className="text-sm text-gray-500">主催: {event.organizer}</span>
+                      <button className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center space-x-1">
+                        <span>参加申込</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -248,60 +348,136 @@ const EventsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">過去のイベント</h2>
-            <span className="text-gray-500">{pastEvents.length}件のイベント</span>
+            <span className="text-gray-500">{pastLoading ? '...' : pastEvents.length}件のイベント</span>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pastEvents.map((event) => (
-              <div key={event.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden opacity-75">
-                <div className="relative">
-                  <img 
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-32 object-cover"
-                  />
-                  <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 ${getTypeColor(event.type)} text-white text-xs font-medium rounded-full`}>
-                      {event.type}
-                    </span>
-                  </div>
-                  <div className="absolute top-2 right-2">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(event.status)}`}>
-                      {event.status}
-                    </span>
+            {pastLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-sm overflow-hidden opacity-75 animate-pulse">
+                  <div className="w-full h-32 bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/4"></div>
                   </div>
                 </div>
+              ))
+            ) : pastEvents.length > 0 ? (
+              pastEvents.map((event) => {
+                const imageUrl = event.attributes.featuredImage?.data?.attributes.url 
+                  ? `http://localhost:1337${event.attributes.featuredImage.data.attributes.url}`
+                  : 'https://images.pexels.com/photos/7551662/pexels-photo-7551662.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop';
                 
-                <div className="p-4">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {event.title}
-                  </h4>
-                  
-                  <div className="space-y-1 mb-3">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      <span>{event.date}</span>
+                const startDate = new Date(event.attributes.startDate).toLocaleDateString('ja-JP');
+                
+                return (
+                  <div key={event.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden opacity-75">
+                    <div className="relative">
+                      <img 
+                        src={imageUrl}
+                        alt={event.attributes.title}
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <span className="px-2 py-1 bg-orange-600 text-white text-xs font-medium rounded-full">
+                          {event.attributes.eventType}
+                        </span>
+                      </div>
+                      <div className="absolute top-2 right-2">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
+                          {event.attributes.status}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Users className="w-3 h-3 mr-1" />
-                      <span>{event.participants}</span>
+                    
+                    <div className="p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                        {event.attributes.title}
+                      </h4>
+                      
+                      <div className="space-y-1 mb-3">
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          <span>{startDate}</span>
+                        </div>
+                        {event.attributes.maxParticipants && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Users className="w-3 h-3 mr-1" />
+                            <span>{event.attributes.currentParticipants}名参加</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {event.attributes.tags && event.attributes.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {event.attributes.tags.slice(0, 2).map((tag: string, index: number) => (
+                            <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <button className="text-orange-600 hover:text-orange-800 text-sm font-medium">
+                        レポートを見る
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {event.tags.slice(0, 2).map((tag, index) => (
-                      <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                        #{tag}
+                );
+              })
+            ) : (
+              pastEventsStatic.map((event) => (
+                <div key={event.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden opacity-75">
+                  <div className="relative">
+                    <img 
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <span className={`px-2 py-1 ${getTypeColor(event.type)} text-white text-xs font-medium rounded-full`}>
+                        {event.type}
                       </span>
-                    ))}
+                    </div>
+                    <div className="absolute top-2 right-2">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(event.status)}`}>
+                        {event.status}
+                      </span>
+                    </div>
                   </div>
+                  
+                  <div className="p-4">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                      {event.title}
+                    </h4>
+                    
+                    <div className="space-y-1 mb-3">
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        <span>{event.date}</span>
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Users className="w-3 h-3 mr-1" />
+                        <span>{event.participants}</span>
+                      </div>
+                    </div>
 
-                  <button className="text-orange-600 hover:text-orange-800 text-sm font-medium">
-                    レポートを見る
-                  </button>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {event.tags.slice(0, 2).map((tag, index) => (
+                        <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <button className="text-orange-600 hover:text-orange-800 text-sm font-medium">
+                      レポートを見る
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>
