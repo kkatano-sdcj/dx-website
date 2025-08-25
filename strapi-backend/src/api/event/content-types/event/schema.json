@@ -1,0 +1,65 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events",
+  "info": {
+    "singularName": "event",
+    "pluralName": "events",
+    "displayName": "Event",
+    "description": "イベント情報"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "startDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime"
+    },
+    "location": {
+      "type": "string",
+      "required": true
+    },
+    "eventType": {
+      "type": "enumeration",
+      "enum": ["ハッカソン", "ワークショップ", "勉強会", "セミナー", "キックオフ", "講座"],
+      "required": true
+    },
+    "maxParticipants": {
+      "type": "integer"
+    },
+    "currentParticipants": {
+      "type": "integer",
+      "default": 0
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["募集中", "満員", "終了"],
+      "default": "募集中"
+    },
+    "featuredImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "tags": {
+      "type": "json"
+    },
+    "organizer": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

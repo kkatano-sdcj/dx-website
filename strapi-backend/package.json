@@ -1,0 +1,31 @@
+{
+  "name": "technews-hub-cms",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TechNews Hub CMS Backend",
+  "scripts": {
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "build": "strapi build",
+    "strapi": "strapi"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "@strapi/strapi": "4.15.5",
+    "@strapi/plugin-users-permissions": "4.15.5",
+    "@strapi/plugin-upload": "4.15.5",
+    "@strapi/plugin-i18n": "4.15.5",
+    "better-sqlite3": "8.6.0"
+  },
+  "author": {
+    "name": "TechNews Hub Team"
+  },
+  "strapi": {
+    "uuid": "technews-hub-cms"
+  },
+  "engines": {
+    "node": ">=16.0.0 <=20.x.x",
+    "npm": ">=6.0.0"
+  },
+  "license": "MIT"
+}
