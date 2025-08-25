@@ -42,7 +42,7 @@ const HomePage = () => {
   // CMS からのフィーチャード記事があれば使用
   const displayFeaturedArticle = featuredArticles.length > 0 ? featuredArticles[0] : null;
 
-  const trendingArticles = [
+  const trendingArticlesData = [
     {
       title: "機械学習モデルの本番運用で気をつけるべき5つのポイント",
       excerpt: "MLOpsの観点から見た、機械学習システムの安定運用に必要な要素を解説。",
@@ -86,7 +86,7 @@ const HomePage = () => {
   ];
 
   // CMS からのカテゴリーデータを使用（フォールバック付き）
-  const categories = [
+  const categoriesData = [
     { name: "AI系ニュース", icon: Bot, count: 24, color: "from-blue-500 to-cyan-500", path: "/ai-news" },
     { name: "技術解説", icon: BookOpen, count: 18, color: "from-green-500 to-emerald-500", path: "/tech-explanation" },
     { name: "学習", icon: TrendingUp, count: 32, color: "from-purple-500 to-pink-500", path: "/learning" },
@@ -101,7 +101,7 @@ const HomePage = () => {
     count: 0, // 記事数は別途計算が必要
     color: `from-${cat.attributes.color}-500 to-${cat.attributes.color}-600`,
     path: `/${cat.attributes.slug}`
-  })) : categories;
+  })) : categoriesData;
 
   const trendingTopics = [
     { name: "ChatGPT活用法", count: "156記事" },
@@ -327,7 +327,7 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="grid lg:grid-cols-2 gap-8">
-              {trendingArticles.map((article, index) => (
+              {trendingArticlesData.map((article, index) => (
                 <div key={index} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50">
                   <div className="relative">
                     <img 
@@ -449,215 +449,6 @@ const HomePage = () => {
               ))}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Trending Topics */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%224%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">トレンドトピック</h2>
-            <p className="text-blue-100 text-xl">いま注目されているキーワード</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trendingTopics.map((topic, index) => (
-              <button 
-                key={index}
-                className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 text-left transform hover:-translate-y-1"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-white group-hover:text-blue-100 transition-colors">
-                    #{topic.name}
-                  </h3>
-                  <TrendingUp className="w-5 h-5 text-blue-300 group-hover:text-blue-200 transition-colors" />
-                </div>
-                <p className="text-blue-200 text-sm">{topic.count}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl p-12">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Bot className="w-8 h-8 text-white" />
-            </div>
-            
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              週刊テックニュース
-            </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              最新のAI・テクノロジー情報を毎週お届け。
-              <span className="font-semibold">15,000人以上</span>が購読中
-            </p>
-            
-            <div className="flex flex-col sm:flex-row max-w-md mx-auto gap-4">
-              <input 
-                type="email" 
-                placeholder="メールアドレスを入力"
-                className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              />
-              <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                購読する
-              </button>
-            </div>
-            
-            <p className="text-sm text-gray-500 mt-4">
-              いつでも配信停止できます。プライバシーポリシーに同意の上ご登録ください。
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
-
-export default HomePage;
-              <a 
-                key={index} 
-                href={category.path}
-                className="group relative bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100/50 overflow-hidden"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
-                <div className="relative">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${category.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <category.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    {category.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4">{category.count}記事</p>
-                  <div className="flex items-center text-blue-600 font-semibold group-hover:text-blue-700">
-                    <span>詳しく見る</span>
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trending Articles */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">トレンド記事</h2>
-              <p className="text-gray-600">今最も読まれている記事</p>
-            </div>
-            <button className="group text-blue-600 hover:text-blue-700 font-semibold flex items-center space-x-2 transition-colors">
-              <span>すべて見る</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="grid lg:grid-cols-2 gap-8">
-            {trendingArticles.map((article, index) => (
-              <div key={index} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50">
-                <div className="relative">
-                  <img 
-                    src={article.image}
-                    alt={article.title}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-6 left-6">
-                    <span className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-full shadow-lg">
-                      {article.category}
-                    </span>
-                  </div>
-                  {article.isPodcast && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm">
-                        <Play className="w-8 h-8 text-white ml-1" />
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute top-6 right-6">
-                    <div className="flex items-center space-x-1 bg-black/20 backdrop-blur-sm rounded-full px-3 py-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-white text-sm font-medium">トレンド</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-8">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
-                    <span className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{article.readTime}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{article.views}</span>
-                    </span>
-                    <span>{article.date}</span>
-                  </div>
-                  
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors leading-tight">
-                    {article.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 leading-relaxed mb-6">
-                    {article.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <button className="group text-blue-600 hover:text-blue-700 font-semibold flex items-center space-x-2 transition-colors">
-                      <span>続きを読む</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    <div className="flex items-center space-x-2">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Share2 className="w-4 h-4 text-gray-500" />
-                      </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Bookmark className="w-4 h-4 text-gray-500" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Latest Articles */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-blue-50/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">最新記事</h2>
-              <p className="text-gray-600">新着コンテンツをチェック</p>
-            </div>
-            <button className="group text-blue-600 hover:text-blue-700 font-semibold flex items-center space-x-2 transition-colors">
-              <span>すべて見る</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {articles.map((article, index) => (
-              <ArticleCard
-                key={index}
-                title={article.title}
-                excerpt={article.excerpt}
-                image={article.image}
-                category={article.category}
-                readTime={article.readTime}
-                views={article.views}
-                date={article.date}
-                size="large"
-              />
-            ))}
-          </div>
         </div>
       </section>
 
