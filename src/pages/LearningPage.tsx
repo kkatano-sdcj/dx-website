@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useArticles } from '../hooks/useArticles';
 import { TrendingUp, Play, BookOpen, Award, Clock, Users } from 'lucide-react';
-import ArticleCard from '../components/ArticleCard';
+import CMSArticleCard from '../components/CMSArticleCard';
 
 const LearningPage = () => {
   const [selectedLevel, setSelectedLevel] = useState('all');
+  
+  // CMS データを取得
+  const { articles: allArticles, loading: articlesLoading } = useArticles({ category: 'learning' });
 
   const levels = [
     { id: 'all', name: 'すべて' },
@@ -229,20 +233,60 @@ const LearningPage = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articles.map((article, index) => (
-              <ArticleCard
-                key={index}
-                title={article.title}
-                excerpt={article.excerpt}
-                image={article.image}
-                category={article.category}
-                readTime={article.readTime}
-                views={article.views}
-                date={article.date}
-                author={article.author}
-                size="medium"
-              />
-            ))}
+            {articlesLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-3xl shadow-lg overflow-hidden animate-pulse">
+                  <div className="w-full h-48 bg-gray-200"></div>
+                  <div className="p-8">
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                    <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              ))
+            ) : allArticles.length > 0 ? (
+              allArticles.map((article) => (
+                <CMSArticleCard
+                  key={article.id}
+                  article={article}
+                  size="medium"
+                />
+              ))
+            ) : (
+              articles.map((article, index) => (
+                <div key={index} className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 transform hover:-translate-y-2">
+                  <div className="relative overflow-hidden">
+                    <img 
+                      src={article.image}
+                      alt={article.title}
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute top-6 left-6">
+                      <span className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-full shadow-lg backdrop-blur-sm">
+                        {article.category}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-8">
+                    <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+                      <span>{article.readTime}</span>
+                      <span>{article.views}</span>
+                      <span>{article.date}</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 leading-tight line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed line-clamp-3 mb-6">
+                      {article.excerpt}
+                    </p>
+                    <div className="text-sm text-gray-500 mb-6">
+                      執筆者: {article.author}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
