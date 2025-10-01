@@ -4,7 +4,8 @@ import {
   Search, 
   Menu, 
   X, 
-  Bot
+  Bot,
+  Settings
 } from 'lucide-react';
 
 const Header = () => {
@@ -64,6 +65,13 @@ const Header = () => {
                 className="bg-transparent border-none outline-none text-sm w-40"
               />
             </div>
+            <Link
+              to="/admin"
+              className="hidden sm:flex items-center space-x-1 px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="text-sm font-medium">管理画面</span>
+            </Link>
             <button 
               className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -91,6 +99,16 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
+              <Link
+                to="/admin"
+                className="block px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors border-t border-gray-200 mt-2 pt-4"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <div className="flex items-center space-x-2">
+                  <Settings className="w-4 h-4" />
+                  <span>管理画面</span>
+                </div>
+              </Link>
             </nav>
           </div>
         )}

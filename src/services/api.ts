@@ -1,14 +1,5 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:1337/api';
-
-// Axios インスタンスの作成
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import { api, strapiQuery, cachedApi } from '../utils/api';
+import { getImageUrl } from '../config/environment';
 
 // 型定義
 export interface Article {
@@ -148,165 +139,217 @@ export interface Event {
 }
 
 // API関数
-export const articlesApi = {
-  // 全記事取得
+export const aiTechApi = {
+  // 全記事取得（キャッシュ付き）
   getAll: async (params?: {
     populate?: string;
     filters?: any;
     sort?: string;
     pagination?: { page: number; pageSize: number };
   }) => {
-    const response = await api.get('/articles', { params });
-    return response.data;
+    return await cachedApi.get('/ai-techs', { params });
   },
 
   // 記事詳細取得
   getBySlug: async (slug: string) => {
-    const response = await api.get(`/articles`, {
-      params: {
-        filters: { slug: { $eq: slug } },
-        populate: ['featuredImage', 'category', 'author', 'tags'],
-      },
-    });
-    return response.data.data[0];
+    const response = await api.get(`/ai-techs`,
+      strapiQuery.build(
+        strapiQuery.filters({ slug: { $eq: slug } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags'])
+      )
+    );
+    return response.data[0];
   },
 
-  // カテゴリー別記事取得
+  // カテゴリー別記事取得（キャッシュ付き）
   getByCategory: async (categorySlug: string) => {
-    const response = await api.get('/articles', {
-      params: {
-        filters: { category: { slug: { $eq: categorySlug } } },
-        populate: ['featuredImage', 'category', 'author', 'tags'],
-        sort: ['publishedDate:desc'],
-      },
-    });
-    return response.data;
+    return await cachedApi.get('/ai-techs',
+      strapiQuery.build(
+        strapiQuery.filters({ category: { slug: { $eq: categorySlug } } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags']),
+        strapiQuery.sort('publishedDate:desc')
+      )
+    );
   },
 
-  // フィーチャード記事取得
+  // フィーチャード記事取得（キャッシュ付き）
   getFeatured: async () => {
-    const response = await api.get('/articles', {
-      params: {
-        filters: { isFeatured: { $eq: true } },
-        populate: ['featuredImage', 'category', 'author', 'tags'],
-        sort: ['publishedDate:desc'],
-        pagination: { page: 1, pageSize: 3 },
-      },
-    });
-    return response.data;
+    return await cachedApi.get('/ai-techs',
+      strapiQuery.build(
+        strapiQuery.filters({ isFeatured: { $eq: true } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags']),
+        strapiQuery.sort('publishedDate:desc'),
+        strapiQuery.pagination(1, 3)
+      )
+    );
   },
 
-  // トレンド記事取得
+  // トレンド記事取得（キャッシュ付き）
   getTrending: async () => {
-    const response = await api.get('/articles', {
-      params: {
-        filters: { isTrending: { $eq: true } },
-        populate: ['featuredImage', 'category', 'author', 'tags'],
-        sort: ['views:desc'],
-        pagination: { page: 1, pageSize: 5 },
-      },
-    });
-    return response.data;
+    return await cachedApi.get('/ai-techs',
+      strapiQuery.build(
+        strapiQuery.filters({ isTrending: { $eq: true } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags']),
+        strapiQuery.sort('views:desc'),
+        strapiQuery.pagination(1, 5)
+      )
+    );
+  },
+};
+
+export const articlesApi = {
+  // 全記事取得（キャッシュ付き）
+  getAll: async (params?: {
+    populate?: string;
+    filters?: any;
+    sort?: string;
+    pagination?: { page: number; pageSize: number };
+  }) => {
+    return await cachedApi.get('/articles', { params });
+  },
+
+  // 記事詳細取得
+  getBySlug: async (slug: string) => {
+    const response = await api.get(`/articles`,
+      strapiQuery.build(
+        strapiQuery.filters({ slug: { $eq: slug } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags'])
+      )
+    );
+    return response.data[0];
+  },
+
+  // カテゴリー別記事取得（キャッシュ付き）
+  getByCategory: async (categorySlug: string) => {
+    return await cachedApi.get('/articles',
+      strapiQuery.build(
+        strapiQuery.filters({ category: { slug: { $eq: categorySlug } } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags']),
+        strapiQuery.sort('publishedDate:desc')
+      )
+    );
+  },
+
+  // フィーチャード記事取得（キャッシュ付き）
+  getFeatured: async () => {
+    return await cachedApi.get('/articles',
+      strapiQuery.build(
+        strapiQuery.filters({ isFeatured: { $eq: true } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags']),
+        strapiQuery.sort('publishedDate:desc'),
+        strapiQuery.pagination(1, 3)
+      )
+    );
+  },
+
+  // トレンド記事取得（キャッシュ付き）
+  getTrending: async () => {
+    return await cachedApi.get('/articles',
+      strapiQuery.build(
+        strapiQuery.filters({ isTrending: { $eq: true } }),
+        strapiQuery.populate(['featuredImage', 'category', 'author', 'tags']),
+        strapiQuery.sort('views:desc'),
+        strapiQuery.pagination(1, 5)
+      )
+    );
   },
 };
 
 export const categoriesApi = {
   getAll: async () => {
-    const response = await api.get('/categories');
-    return response.data;
+    return await cachedApi.get('/categories', {}, 10 * 60 * 1000); // 10分キャッシュ
   },
 
   getBySlug: async (slug: string) => {
-    const response = await api.get('/categories', {
-      params: {
-        filters: { slug: { $eq: slug } },
-      },
-    });
-    return response.data.data[0];
+    const response = await cachedApi.get('/categories',
+      strapiQuery.build(
+        strapiQuery.filters({ slug: { $eq: slug } })
+      ),
+      10 * 60 * 1000
+    );
+    return response.data[0];
   },
 };
 
 export const authorsApi = {
   getAll: async () => {
-    const response = await api.get('/authors', {
-      params: {
-        populate: ['avatar'],
-      },
-    });
-    return response.data;
+    return await cachedApi.get('/authors',
+      strapiQuery.build(
+        strapiQuery.populate(['avatar'])
+      ),
+      10 * 60 * 1000
+    );
   },
 
   getById: async (id: number) => {
-    const response = await api.get(`/authors/${id}`, {
-      params: {
-        populate: ['avatar', 'articles'],
-      },
-    });
-    return response.data;
+    return await api.get(`/authors/${id}`,
+      strapiQuery.build(
+        strapiQuery.populate(['avatar', 'articles'])
+      )
+    );
   },
 };
 
 export const podcastsApi = {
   getAll: async () => {
-    const response = await api.get('/podcasts', {
-      params: {
-        populate: ['coverImage', 'audioFile'],
-        sort: ['episodeNumber:desc'],
-      },
-    });
-    return response.data;
+    return await cachedApi.get('/podcasts',
+      strapiQuery.build(
+        strapiQuery.populate(['coverImage', 'audioFile']),
+        strapiQuery.sort('episodeNumber:desc')
+      )
+    );
   },
 
   getById: async (id: number) => {
-    const response = await api.get(`/podcasts/${id}`, {
-      params: {
-        populate: ['coverImage', 'audioFile'],
-      },
-    });
-    return response.data;
+    return await api.get(`/podcasts/${id}`,
+      strapiQuery.build(
+        strapiQuery.populate(['coverImage', 'audioFile'])
+      )
+    );
   },
 };
 
 export const eventsApi = {
   getAll: async () => {
-    const response = await api.get('/events', {
-      params: {
-        populate: ['featuredImage'],
-        sort: ['startDate:desc'],
-      },
-    });
-    return response.data;
+    return await cachedApi.get('/events',
+      strapiQuery.build(
+        strapiQuery.populate(['featuredImage']),
+        strapiQuery.sort('startDate:desc')
+      )
+    );
   },
 
   getUpcoming: async () => {
-    const response = await api.get('/events', {
-      params: {
-        filters: {
+    return await api.get('/events',
+      strapiQuery.build(
+        strapiQuery.filters({
           startDate: { $gte: new Date().toISOString() },
           status: { $eq: '募集中' },
-        },
-        populate: ['featuredImage'],
-        sort: ['startDate:asc'],
-      },
-    });
-    return response.data;
+        }),
+        strapiQuery.populate(['featuredImage']),
+        strapiQuery.sort('startDate:asc')
+      )
+    );
   },
 
   getPast: async () => {
-    const response = await api.get('/events', {
-      params: {
-        filters: {
+    return await api.get('/events',
+      strapiQuery.build(
+        strapiQuery.filters({
           $or: [
             { endDate: { $lt: new Date().toISOString() } },
             { status: { $eq: '終了' } },
           ],
-        },
-        populate: ['featuredImage'],
-        sort: ['startDate:desc'],
-      },
-    });
-    return response.data;
+        }),
+        strapiQuery.populate(['featuredImage']),
+        strapiQuery.sort('startDate:desc')
+      )
+    );
   },
 };
 
-export default api;
+// 画像URL取得ユーティリティをエクスポート
+export { getImageUrl } from '../config/environment';
+
+// APIユーティリティをエクスポート
+export { api, strapiQuery, handleApiError } from '../utils/api';

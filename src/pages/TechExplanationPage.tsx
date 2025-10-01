@@ -1,13 +1,59 @@
-import React, { useState } from 'react';
-import { useArticles } from '../hooks/useArticles';
-import { BookOpen, Code, Database, Cpu, Globe, Shield } from 'lucide-react';
-import CMSArticleCard from '../components/CMSArticleCard';
+import React, { useState, useEffect } from 'react';
+import { aiTechApi, Article } from '../services/api';
+import { BookOpen, Code, Database, Cpu, Globe, Shield, Clock, Eye } from 'lucide-react';
 
 const TechExplanationPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  
-  // CMS データを取得
-  const { articles: allArticles, loading: articlesLoading } = useArticles({ category: 'tech-explanation' });
+  const [allArticles, setAllArticles] = useState<Article[]>([]);
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
+  const [articlesLoading, setArticlesLoading] = useState(true);
+  const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
+
+  // Strapiから記事を取得
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setArticlesLoading(true);
+      try {
+        // テクニカルターム解説カテゴリーの記事を取得
+        const response = await aiTechApi.getAll({
+          populate: 'featuredImage,category,author,tags',
+          sort: 'publishedDate:desc'
+        });
+
+        const articles = response.data || [];
+        setAllArticles(articles);
+        setFilteredArticles(articles);
+
+        // フィーチャード記事を選択（最新または特集フラグがある記事）
+        const featured = articles.find((article: Article) => article.attributes.isFeatured) || articles[0];
+        setFeaturedArticle(featured);
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+        // API失敗時はフォールバックデータを使用
+        setAllArticles(fallbackArticles);
+        setFilteredArticles(fallbackArticles);
+        setFeaturedArticle(fallbackArticles[0]);
+      } finally {
+        setArticlesLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
+  // カテゴリーでフィルタリング
+  useEffect(() => {
+    if (selectedCategory === 'all') {
+      setFilteredArticles(allArticles);
+    } else {
+      // タグでフィルタリング
+      const filtered = allArticles.filter((article: Article) => {
+        const tags = article.attributes.tags?.data || [];
+        return tags.some(tag => tag.attributes.slug === selectedCategory);
+      });
+      setFilteredArticles(filtered);
+    }
+  }, [selectedCategory, allArticles]);
 
   const categories = [
     { id: 'all', name: 'すべて', icon: BookOpen },
@@ -15,81 +61,264 @@ const TechExplanationPage = () => {
     { id: 'database', name: 'データベース', icon: Database },
     { id: 'infrastructure', name: 'インフラ', icon: Cpu },
     { id: 'web', name: 'Web技術', icon: Globe },
-    { id: 'security', name: 'セキュリティ', icon: Shield }
+    { id: 'security', name: 'セキュリティ', icon: Shield },
+    { id: 'ai', name: 'AI', icon: Cpu },
+    { id: 'vibecoding', name: 'バイブコーディング', icon: Code }
   ];
 
-  const articles = [
+  // フォールバック用のダミーデータ
+  const fallbackArticles = [
     {
-      title: "Docker完全ガイド：コンテナ技術の基礎から実践まで",
-      excerpt: "Dockerの基本概念から実際の開発環境での活用方法まで、初心者にも分かりやすく解説します。コンテナ化のメリットと実装のポイントを詳しく説明。",
-      image: "https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "技術解説",
-      readTime: "12分",
-      views: "4.2k",
-      date: "2024年1月20日",
-      author: "インフラエンジニア 佐藤"
+      id: 1,
+      attributes: {
+        title: "Docker完全ガイド：コンテナ技術の基礎から実践まで",
+        excerpt: "Dockerの基本概念から実際の開発環境での活用方法まで、初心者にも分かりやすく解説します。",
+        readTime: 12,
+        views: 4200,
+        publishedDate: "2024-01-20",
+        isFeatured: true,
+        featuredImage: {
+          data: {
+            attributes: {
+              url: "https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+            }
+          }
+        },
+        category: {
+          data: {
+            attributes: {
+              name: "技術解説",
+              slug: "tech-explanation"
+            }
+          }
+        },
+        author: {
+          data: {
+            attributes: {
+              name: "佐藤",
+              position: "インフラエンジニア"
+            }
+          }
+        },
+        tags: {
+          data: [
+            { attributes: { name: "インフラ", slug: "infrastructure" } }
+          ]
+        }
+      }
     },
     {
-      title: "React Hooks完全マスター：useEffect、useState、カスタムフック",
-      excerpt: "React Hooksの基本から応用まで徹底解説。useEffect、useStateの正しい使い方と、カスタムフックの作成方法について実例を交えて説明します。",
-      image: "https://images.pexels.com/photos/8386434/pexels-photo-8386434.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "技術解説",
-      readTime: "15分",
-      views: "3.8k",
-      date: "2024年1月18日",
-      author: "フロントエンド開発者 田中"
+      id: 2,
+      attributes: {
+        title: "React Hooksの基礎：useState、useEffectを完全理解",
+        excerpt: "React Hooksの中でも特に重要なuseStateとuseEffectについて、実例を交えながら詳しく解説します。",
+        readTime: 10,
+        views: 3800,
+        publishedDate: "2024-01-18",
+        isFeatured: false,
+        featuredImage: {
+          data: {
+            attributes: {
+              url: "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+            }
+          }
+        },
+        category: {
+          data: {
+            attributes: {
+              name: "技術解説",
+              slug: "tech-explanation"
+            }
+          }
+        },
+        author: {
+          data: {
+            attributes: {
+              name: "田中",
+              position: "フロントエンドエンジニア"
+            }
+          }
+        },
+        tags: {
+          data: [
+            { attributes: { name: "プログラミング", slug: "programming" } }
+          ]
+        }
+      }
     },
     {
-      title: "PostgreSQL vs MySQL：データベース選択の決定要因",
-      excerpt: "PostgreSQLとMySQLの特徴を比較分析。パフォーマンス、機能、運用面での違いを詳しく解説し、プロジェクトに最適なデータベースの選び方を紹介。",
-      image: "https://images.pexels.com/photos/8386422/pexels-photo-8386422.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "技術解説",
-      readTime: "10分",
-      views: "2.9k",
-      date: "2024年1月16日",
-      author: "データベースエンジニア 山田"
+      id: 3,
+      attributes: {
+        title: "PostgreSQL vs MySQL：どちらを選ぶべきか",
+        excerpt: "PostgreSQLとMySQLの特徴を比較し、プロジェクトに最適なデータベースの選び方を解説します。",
+        readTime: 15,
+        views: 5100,
+        publishedDate: "2024-01-15",
+        isFeatured: false,
+        featuredImage: {
+          data: {
+            attributes: {
+              url: "https://images.pexels.com/photos/1181271/pexels-photo-1181271.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+            }
+          }
+        },
+        category: {
+          data: {
+            attributes: {
+              name: "技術解説",
+              slug: "tech-explanation"
+            }
+          }
+        },
+        author: {
+          data: {
+            attributes: {
+              name: "鈴木",
+              position: "データベースエンジニア"
+            }
+          }
+        },
+        tags: {
+          data: [
+            { attributes: { name: "データベース", slug: "database" } }
+          ]
+        }
+      }
     },
     {
-      title: "Kubernetes入門：オーケストレーションの基礎概念",
-      excerpt: "Kubernetesの基本概念であるPod、Service、Deploymentについて分かりやすく解説。コンテナオーケストレーションの重要性と実装方法を学びます。",
-      image: "https://images.pexels.com/photos/7551662/pexels-photo-7551662.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "技術解説",
-      readTime: "18分",
-      views: "3.1k",
-      date: "2024年1月14日",
-      author: "クラウドアーキテクト 鈴木"
+      id: 4,
+      attributes: {
+        title: "REST API設計のベストプラクティス",
+        excerpt: "REST APIを設計する際に知っておくべき原則とベストプラクティスを実例付きで紹介します。",
+        readTime: 13,
+        views: 4500,
+        publishedDate: "2024-01-12",
+        isFeatured: false,
+        featuredImage: {
+          data: {
+            attributes: {
+              url: "https://images.pexels.com/photos/577585/pexels-photo-577585.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+            }
+          }
+        },
+        category: {
+          data: {
+            attributes: {
+              name: "技術解説",
+              slug: "tech-explanation"
+            }
+          }
+        },
+        author: {
+          data: {
+            attributes: {
+              name: "山田",
+              position: "バックエンドエンジニア"
+            }
+          }
+        },
+        tags: {
+          data: [
+            { attributes: { name: "Web技術", slug: "web" } }
+          ]
+        }
+      }
     },
     {
-      title: "GraphQL vs REST API：モダンAPI設計の比較",
-      excerpt: "GraphQLとREST APIの特徴を詳細比較。それぞれのメリット・デメリット、使用場面、実装時の注意点について実例を交えて解説します。",
-      image: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "技術解説",
-      readTime: "13分",
-      views: "2.7k",
-      date: "2024年1月12日",
-      author: "バックエンド開発者 高橋"
+      id: 5,
+      attributes: {
+        title: "セキュアなWebアプリケーション開発入門",
+        excerpt: "XSS、CSRF、SQLインジェクションなど、Webアプリケーションの主要なセキュリティ脅威と対策方法を学びます。",
+        readTime: 18,
+        views: 6200,
+        publishedDate: "2024-01-10",
+        isFeatured: false,
+        featuredImage: {
+          data: {
+            attributes: {
+              url: "https://images.pexels.com/photos/60504/security-protection-anti-virus-software-60504.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+            }
+          }
+        },
+        category: {
+          data: {
+            attributes: {
+              name: "技術解説",
+              slug: "tech-explanation"
+            }
+          }
+        },
+        author: {
+          data: {
+            attributes: {
+              name: "高橋",
+              position: "セキュリティエンジニア"
+            }
+          }
+        },
+        tags: {
+          data: [
+            { attributes: { name: "セキュリティ", slug: "security" } }
+          ]
+        }
+      }
     },
     {
-      title: "TypeScript型システム完全ガイド：ジェネリクスと高度な型",
-      excerpt: "TypeScriptの型システムを深く理解するための完全ガイド。ジェネリクス、ユニオン型、インターセクション型など高度な型の使い方を詳しく解説。",
-      image: "https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "技術解説",
-      readTime: "20分",
-      views: "4.5k",
-      date: "2024年1月10日",
-      author: "TypeScript専門家 伊藤"
+      id: 6,
+      attributes: {
+        title: "AI・機械学習の基礎：初心者向けガイド",
+        excerpt: "AI・機械学習の基本概念から、実際のプロジェクトへの応用方法まで、わかりやすく解説します。",
+        readTime: 14,
+        views: 7300,
+        publishedDate: "2024-01-08",
+        isFeatured: false,
+        featuredImage: {
+          data: {
+            attributes: {
+              url: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+            }
+          }
+        },
+        category: {
+          data: {
+            attributes: {
+              name: "技術解説",
+              slug: "tech-explanation"
+            }
+          }
+        },
+        author: {
+          data: {
+            attributes: {
+              name: "中村",
+              position: "AIエンジニア"
+            }
+          }
+        },
+        tags: {
+          data: [
+            { attributes: { name: "AI", slug: "ai" } }
+          ]
+        }
+      }
     }
-  ];
+  ] as Article[];
 
-  const featuredTutorial = {
-    title: "マイクロサービスアーキテクチャ設計パターン完全ガイド",
-    excerpt: "マイクロサービスアーキテクチャの設計パターンを体系的に解説。サービス分割の原則、通信パターン、データ管理戦略について実践的なアプローチで説明します。",
-    image: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop",
-    category: "技術解説",
-    readTime: "25分",
-    views: "6.1k",
-    date: "2024年1月22日",
-    author: "システムアーキテクト 中村"
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const formatViews = (views: number) => {
+    if (views >= 1000) {
+      return `${(views / 1000).toFixed(1)}k`;
+    }
+    return views.toString();
+  };
+
+  const getImageUrl = (article: Article) => {
+    const imageUrl = article.attributes.featuredImage?.data?.attributes?.url;
+    return imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:1337${imageUrl}`) : 'https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop';
   };
 
   return (
@@ -108,46 +337,58 @@ const TechExplanationPage = () => {
       </section>
 
       {/* Featured Tutorial */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="grid lg:grid-cols-2 gap-0">
-              <div className="relative">
-                <img 
-                  src={featuredTutorial.image}
-                  alt={featuredTutorial.title}
-                  className="w-full h-64 lg:h-full object-cover"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-full flex items-center space-x-1">
-                    <BookOpen className="w-4 h-4" />
-                    <span>詳細ガイド</span>
-                  </span>
+      {featuredArticle && (
+        <section className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="grid lg:grid-cols-2 gap-0">
+                <div className="relative">
+                  <img
+                    src={getImageUrl(featuredArticle)}
+                    alt={featuredArticle.attributes.title}
+                    className="w-full h-64 lg:h-full object-cover"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-full flex items-center space-x-1">
+                      <BookOpen className="w-4 h-4" />
+                      <span>詳細ガイド</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="p-8 flex flex-col justify-center">
-                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
-                  <span>{featuredTutorial.date}</span>
-                  <span>{featuredTutorial.readTime}</span>
-                  <span>{featuredTutorial.views} views</span>
-                </div>
-                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-                  {featuredTutorial.title}
-                </h2>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  {featuredTutorial.excerpt}
-                </p>
-                <div className="flex items-center justify-between">
-                  <button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
-                    ガイドを読む
-                  </button>
-                  <span className="text-sm text-gray-500">執筆者: {featuredTutorial.author}</span>
+                <div className="p-8 flex flex-col justify-center">
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+                    <span>{formatDate(featuredArticle.attributes.publishedDate)}</span>
+                    <span className="flex items-center">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {featuredArticle.attributes.readTime}分
+                    </span>
+                    <span className="flex items-center">
+                      <Eye className="w-4 h-4 mr-1" />
+                      {formatViews(featuredArticle.attributes.views)}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
+                    {featuredArticle.attributes.title}
+                  </h2>
+                  <p className="text-gray-600 mb-6 leading-relaxed">
+                    {featuredArticle.attributes.excerpt}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
+                      ガイドを読む
+                    </button>
+                    {featuredArticle.attributes.author?.data && (
+                      <span className="text-sm text-gray-500">
+                        執筆者: {featuredArticle.attributes.author.data.attributes.position} {featuredArticle.attributes.author.data.attributes.name}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Category Filter */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-white/50 backdrop-blur-sm">
@@ -177,7 +418,7 @@ const TechExplanationPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-2xl font-bold text-gray-900">技術解説記事</h3>
-            <span className="text-gray-500">{articles.length}件の記事</span>
+            <span className="text-gray-500">{filteredArticles.length}件の記事</span>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -193,47 +434,52 @@ const TechExplanationPage = () => {
                   </div>
                 </div>
               ))
-            ) : allArticles.length > 0 ? (
-              allArticles.map((article) => (
-                <CMSArticleCard
-                  key={article.id}
-                  article={article}
-                  size="medium"
-                />
-              ))
-            ) : (
-              articles.map((article, index) => (
-                <div key={index} className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 transform hover:-translate-y-2">
-                  <div className="relative overflow-hidden">
-                    <img 
-                      src={article.image}
-                      alt={article.title}
+            ) : filteredArticles.length > 0 ? (
+              filteredArticles.map((article) => (
+                <div key={article.id} className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 transform hover:-translate-y-2">
+                  <div className="relative overflow-hidden group">
+                    <img
+                      src={getImageUrl(article)}
+                      alt={article.attributes.title}
                       className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                     <div className="absolute top-6 left-6">
                       <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold rounded-full shadow-lg backdrop-blur-sm">
-                        {article.category}
+                        {article.attributes.category?.data?.attributes.name || '技術解説'}
                       </span>
                     </div>
                   </div>
                   <div className="p-8">
                     <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
-                      <span>{article.readTime}</span>
-                      <span>{article.views}</span>
-                      <span>{article.date}</span>
+                      <span className="flex items-center">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {article.attributes.readTime}分
+                      </span>
+                      <span className="flex items-center">
+                        <Eye className="w-4 h-4 mr-1" />
+                        {formatViews(article.attributes.views)}
+                      </span>
+                      <span>{formatDate(article.attributes.publishedDate)}</span>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-4 leading-tight line-clamp-2">
-                      {article.title}
+                      {article.attributes.title}
                     </h3>
                     <p className="text-gray-600 leading-relaxed line-clamp-3 mb-6">
-                      {article.excerpt}
+                      {article.attributes.excerpt}
                     </p>
-                    <div className="text-sm text-gray-500 mb-6">
-                      執筆者: {article.author}
-                    </div>
+                    {article.attributes.author?.data && (
+                      <div className="text-sm text-gray-500">
+                        執筆者: {article.attributes.author.data.attributes.position} {article.attributes.author.data.attributes.name}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
+            ) : (
+              <div className="col-span-3 text-center py-12">
+                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">現在、技術解説記事はありません。</p>
+              </div>
             )}
           </div>
         </div>
